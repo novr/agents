@@ -14,6 +14,7 @@ owned_skills() {
   if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git -C "$REPO" ls-files -z -- 'skills/*/SKILL.md' |
       while IFS= read -r -d '' f; do
+        [ -f "$REPO/$f" ] || continue
         basename "$(dirname "$f")"
       done
     return
@@ -30,6 +31,7 @@ owned_commands() {
   if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git -C "$REPO" ls-files -z -- 'commands/*.md' |
       while IFS= read -r -d '' f; do
+        [ -f "$REPO/$f" ] || continue
         basename "$f"
       done
     return
