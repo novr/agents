@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# Link this repo's skills/commands into ~/.agents (runtime).
-# ~/.agents stays a real directory so third-party installs do not touch the repo.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$(dirname "$0")" && pwd -P)"
 AGENTS_SKILLS="${HOME}/.agents/skills"
 AGENTS_COMMANDS="${HOME}/.agents/commands"
+CLAUDE_SKILLS="${HOME}/.claude/skills"
 
-usage() {
-  echo "usage: $0" >&2
-  exit 1
+resolve() {
+  realpath "$1" 2>/dev/null || true
 }
 
 owned_skills() {
+  if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git -C "$REPO" ls-files -z -- 'skills/*/SKILL.md' |
+      while IFS= read -r -d '' f; do
+        basename "$(dirname "$f")"
+      done
+    return
+  fi
   local s
   for s in "$REPO"/skills/*/; do
     [ -d "$s" ] || continue
@@ -22,6 +27,13 @@ owned_skills() {
 }
 
 owned_commands() {
+  if git -C "$REPO" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git -C "$REPO" ls-files -z -- 'commands/*.md' |
+      while IFS= read -r -d '' f; do
+        basename "$f"
+      done
+    return
+  fi
   local c
   shopt -s nullglob
   for c in "$REPO"/commands/*.md; do
@@ -39,15 +51,19 @@ is_owned() {
   return 1
 }
 
-# Dest may be missing or a symlink. Never replace a real directory/file (third-party).
+# Do not replace a real directory/file.
 link_one() {
   local src="$1"
   local dest="$2"
   local src_abs
-  src_abs="$(realpath "$src")"
+  src_abs="$(resolve "$src")"
+  if [ -z "$src_abs" ]; then
+    echo "missing $src" >&2
+    return 1
+  fi
 
   if [ -L "$dest" ]; then
-    if [ "$(realpath "$dest")" = "$src_abs" ]; then
+    if [ "$(resolve "$dest")" = "$src_abs" ]; then
       echo "ok   $dest"
       return 0
     fi
@@ -61,20 +77,28 @@ link_one() {
   echo "link $dest -> $src_abs"
 }
 
-# Drop symlinks that still point into this repo but are no longer owned.
 prune_stale() {
   local dest_dir="$1"
-  shift
-  local path target name
+  local root_prefix="$2"
+  shift 2
+  local path resolved name
 
+  [ -d "$dest_dir" ] || return 0
   shopt -s nullglob
   for path in "$dest_dir"/*; do
     [ -L "$path" ] || continue
-    target="$(readlink "$path" || true)"
-    case "$target" in
-      "$REPO"/*) ;;
-      *) continue ;;
-    esac
+    resolved="$(resolve "$path")"
+    if [ -z "$resolved" ]; then
+      case "$(readlink "$path" || true)" in
+        "$root_prefix"|"$root_prefix"/*|"$REPO"|"$REPO"/*) ;;
+        *) continue ;;
+      esac
+    else
+      case "$resolved" in
+        "$root_prefix"|"$root_prefix"/*) ;;
+        *) continue ;;
+      esac
+    fi
     name="$(basename "$path")"
     if ! is_owned "$name" "$@"; then
       rm -f "$path"
@@ -83,9 +107,12 @@ prune_stale() {
   done
 }
 
-[ $# -eq 0 ] || usage
+if [ $# -ne 0 ]; then
+  echo "usage: $0" >&2
+  exit 1
+fi
 
-mkdir -p "$AGENTS_SKILLS" "$AGENTS_COMMANDS"
+mkdir -p "$AGENTS_SKILLS" "$AGENTS_COMMANDS" "$CLAUDE_SKILLS"
 
 skills=()
 commands=()
@@ -98,14 +125,25 @@ while IFS= read -r name; do
   commands+=("$name")
 done < <(owned_commands)
 
+status=0
+
 for name in "${skills[@]+"${skills[@]}"}"; do
-  link_one "$REPO/skills/$name" "$AGENTS_SKILLS/$name"
+  link_one "$REPO/skills/$name" "$AGENTS_SKILLS/$name" || status=1
 done
 for name in "${commands[@]+"${commands[@]}"}"; do
-  link_one "$REPO/commands/$name" "$AGENTS_COMMANDS/$name"
+  link_one "$REPO/commands/$name" "$AGENTS_COMMANDS/$name" || status=1
 done
 
-prune_stale "$AGENTS_SKILLS" "${skills[@]+"${skills[@]}"}"
-prune_stale "$AGENTS_COMMANDS" "${commands[@]+"${commands[@]}"}"
+for name in "${skills[@]+"${skills[@]}"}"; do
+  link_one "$AGENTS_SKILLS/$name" "$CLAUDE_SKILLS/$name" || status=1
+done
 
+prune_stale "$AGENTS_SKILLS" "$REPO" "${skills[@]+"${skills[@]}"}"
+prune_stale "$AGENTS_COMMANDS" "$REPO" "${commands[@]+"${commands[@]}"}"
+prune_stale "$CLAUDE_SKILLS" "$AGENTS_SKILLS" "${skills[@]+"${skills[@]}"}"
+
+if [ "$status" -ne 0 ]; then
+  echo "done with errors" >&2
+  exit "$status"
+fi
 echo "done"
