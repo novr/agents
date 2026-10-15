@@ -1,6 +1,14 @@
 # agents
 
-自作の Agent Skills と slash commands。正本は [`skills/`](skills/) と [`commands/`](commands/)。ルートを `~/.agents` に置く。
+自作の Agent Skills と slash commands。正本は [`skills/`](skills/) と [`commands/`](commands/)。
+
+`~/.agents` はランタイム用の別ディレクトリ。自作だけ symlink する:
+
+```bash
+./sync.sh
+```
+
+サードパーティ（`sim-use init` 等）は `~/.agents` に直接入り、このリポには触れない。
 
 ## License
 
