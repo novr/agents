@@ -12,7 +12,7 @@ description: >-
 | コマンド | `/pr-review` | 1 件レビュー |
 | コマンド | `/pr-review-history` | 履歴収集 |
 | スキル | `pr-review-fetch` | 取得 |
-| スキル | `worktree-revolver` | head 隔離 |
+| スキル | `slot-worktree` | head 隔離 |
 | スキル | `pr-review-memory` | 記憶・タグ・history 窓 |
 | スキル | `pr-review-project` | リポジトリ固有軸 |
 | スキル | `pr-review-ios` | iOS 固有軸 |
