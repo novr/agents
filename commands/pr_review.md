@@ -23,8 +23,9 @@ PR 番号 / URL、または head ブランチ名。リポジトリは cwd remote
 4. **既存コメント取得** — 行 / レビュー / 会話を読む。重複指摘しない。投稿しない。
 5. **過去知見** — `pr-review-memory` recall。失敗はスキップ。
 6. **外部資料** — Figma / Confluence / Jira 等。未取得は report に記載。
-7. **レビュー → チャット出力 → 保存** — 下記方針・形式。`pr-review-memory` store。失敗でも出力必須。GitHub へは出さない。
-8. **スロット解放** — Approve 相当かつ JSON の `slot` が数のときだけ `free --slot N`（または `free --branch`）。`slot: null` では free しない。dirty なら未解放を report に書いて保持。Request changes / 保留は free しない。「Approve 相当」はチャット上の判定であり、GitHub への approve 投稿ではない。
+7. **検証** — 既存 CI（`gh pr checks`）を先に確認し、成功済みの検証は再実行しない。実行できる手段（テスト・ビルド・型チェック・lint。README / CI 設定から推定）が差分に関係するときだけ、変更範囲に絞って実行。fork 由来、または PR が実行設定（scripts / Makefile / CI / ビルド設定）を変えているときは実行前にユーザー確認。worktree を成果物で汚さない（残ったら report に記載）。失敗は環境起因を除き、PR 起因が疑わしければ base でも再現を確認。ただし head の worktree で checkout を切り替えず、`slot-worktree` の別 slot（`spin --branch <base>`）か base の CI 結果で行う。実行したコマンドと結果を根拠にする。手段なし・未実行は理由を report に記載。
+8. **レビュー → チャット出力 → 保存** — 下記方針・形式。`pr-review-memory` store。失敗でも出力必須。GitHub へは出さない。
+9. **スロット解放** — Approve 相当かつ JSON の `slot` が数のときだけ `free --slot N`（または `free --branch`）。`slot: null` では free しない。dirty なら未解放を report に書いて保持。Request changes / 保留は free しない。「Approve 相当」はチャット上の判定であり、GitHub への approve 投稿ではない。
 
 ## 失敗時
 
@@ -34,6 +35,7 @@ PR 番号 / URL、または head ブランチ名。リポジトリは cwd remote
 | worktree / ルート移動不能 | 中止 |
 | Exocortex | スキップ可 |
 | 外部資料 | 明記して続行 |
+| 検証 | 手段なし・実行不能・未確認は明記して続行 |
 | free が dirty で失敗 | 保持して report に明記 |
 
 ## 方針
@@ -49,7 +51,7 @@ PR 番号 / URL、または head ブランチ名。リポジトリは cwd remote
    | `error-behavior` | 失敗時の沈黙・追跡 |
    | `security-impact` | 入力・権限・機密 |
    | `observability` | 運用での観測 |
-   | `test-validity` | 重要経路・境界・失敗系 |
+   | `test-validity` | 重要経路・境界・失敗系。実行した検証結果があれば根拠に |
    | `maintainability` | 責務・命名・複雑度 |
 
 4. **固有軸** — iOS/Swift リスク時 `pr-review-ios`、それ以外 `pr-review-project`（併用可）。
