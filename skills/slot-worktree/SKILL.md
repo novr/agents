@@ -11,7 +11,7 @@ description: >-
 
 制御 checkout を切り替えず `slot-1`..`slot-6` に隔離する。出典は [NOTICE](NOTICE)。
 
-既定ルート `${AGENT_WORKTREE_ROOT:-~/worktrees}`（`--worktree-root` 可）。配置キーは origin の `owner/repo` をサニタイズ（basename 衝突回避）。
+既定ルート `${AGENT_WORKTREE_ROOT:-~/worktrees}`（`--worktree-root` 可）。配置キーは `--remote`（既定 `origin`）の `owner/repo` をサニタイズし、取れなければ `basename-<hash>`（basename 衝突回避）。指定 remote が未設定でもローカルブランチがあれば `spin --branch` 可。`--pr` は GitHub 解決が必要。
 
 ## 実行
 
@@ -53,9 +53,9 @@ python3 <slot-worktree-skill-dir>/scripts/slot-worktree.py <subcommand> ...
 
 呼び出し元の責任。dirty / ignored 残りで失敗したら保持して報告。満杯時は `status`。`orphan-dir` は `free --force`。
 
-fetch はするが既存ローカル tip は書き換えない（レビュー用の意図しないリセットを避ける）。
+指定 remote があるときだけ fetch する（既存ローカル tip は書き換えない）。remote 未設定時はローカルブランチのみ。
 
 ## 制約
 
-- 上限 6。空きなし・fork PR・lock 失敗は非 0
+- 上限 6。空きなし・fork PR・lock 失敗・指定 remote 未設定かつローカルブランチなしは非 0
 - Cursor 公式 `/worktree` とは別系統

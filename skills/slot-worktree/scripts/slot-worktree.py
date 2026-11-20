@@ -137,6 +137,19 @@ def local_branch_exists(repo: Path, branch: str) -> bool:
     return result.returncode == 0
 
 
+def list_remotes(repo: Path) -> list[str]:
+    result = subprocess.run(
+        ["git", "-C", str(repo), "remote"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
 def remote_ref_exists(repo: Path, remote: str, branch: str) -> bool:
     result = subprocess.run(
         [
@@ -190,7 +203,7 @@ def _slug_token(value: str) -> str:
 
 
 def repo_storage_key(repo: Path, remote: str) -> str:
-    """Prefer origin owner/repo so two clones with the same basename do not collide."""
+    """Prefer --remote owner/repo; fall back to basename-hash when URL is unavailable."""
     result = subprocess.run(
         ["git", "-C", str(repo), "remote", "get-url", remote],
         check=False,
@@ -244,6 +257,20 @@ def spin_payload(
 
 
 def ensure_local_branch(repo: Path, branch: str, remote: str, *, dry_run: bool) -> None:
+    remotes = list_remotes(repo)
+    if remote not in remotes:
+        if local_branch_exists(repo, branch):
+            return
+        if remotes:
+            available = ", ".join(remotes)
+            raise SlotError(
+                f"remote {remote!r} is not configured (available: {available}); "
+                f"pass --remote <name>, or create local branch {branch!r}"
+            )
+        raise SlotError(
+            f"remote {remote!r} is not configured and branch {branch!r} "
+            "does not exist locally"
+        )
     try:
         git(repo, "fetch", remote, branch, dry_run=dry_run)
     except SlotError:
