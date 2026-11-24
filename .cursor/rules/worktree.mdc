@@ -1,0 +1,16 @@
+---
+description: デフォルトブランチからの feature / 変更は slot-worktree（wt）。公式 /worktree と混ぜない。
+alwaysApply: true
+---
+
+# SLOT WORKTREE
+
+デフォルトブランチ（main / master 等）を土台にする feature / 変更作業は、制御 checkout を切り替えず `slot-worktree`（wt）で隔離する。
+
+- 実行: skill ディレクトリを解決し `python3 <dir>/scripts/slot-worktree.py …`（`spin` / `status` / `free`）
+- ブランチ未作成なら制御側で `git branch <name>` のみ（checkout なし）→ `spin --branch`（または `--pr`）
+- spin 後は JSON の `worktree` でルート移動。`kind` が `control` / `other` ならその path で続行（`free` しない）
+- 制御 checkout で feature へ `git checkout` / `git switch` しない。場当たりの `git worktree add` もしない
+- Cursor 公式 `/worktree` とは別系統。混ぜない
+
+詳細は `slot-worktree` skill。
