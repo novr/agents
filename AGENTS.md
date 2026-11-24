@@ -2,13 +2,15 @@
 
 ## 責務
 
-- 自作 Agent Skills（`skills/`）と slash commands（`commands/`）の**正本**
-- 自作 Cursor project rules（`.cursor/rules/`）の**正本**
-- `./sync.sh` で skills / commands を `~/.agents`（および Claude 用 `~/.claude/skills`）へ **symlink** する（`.cursor/rules/` は対象外。ワークスペースが読む）
+- Agent Skills（`skills/`）と slash commands（`commands/`）の正本を管理する。
+- Cursor project rules（`.cursor/rules/`）の正本を管理する。
+- `./sync.sh` で skills と commands を所定の実行環境へ symlink する。
 
 ## 境界
 
-- このリポは `~/.agents` **ではない**。`~/.agents` はランタイム専用の実ディレクトリ
-- サードパーティ skill / install の正本管理はしない（`~/.agents` に実体のまま置く。`sync.sh` は実ディレクトリを上書きしない）
-- クライアントの読み込み仕様・二重配置・Cloud 同期の運用は扱わない（配備先は `sync.sh` が知る範囲のみ。user 規則 `~/.cursor/rules` も対象外）
-- 各 skill / command / rule の手順・オプションはそれぞれのファイル。横断前提だけ README
+- `~/.agents` はランタイム用のディレクトリとして扱う。
+- サードパーティ製の skill や install は正本として管理しない。
+- クライアントの読み込み仕様や同期の運用は、明示的に依頼された場合を除き扱わない。
+- 各 skill、command、rule の手順やオプションは、それぞれのファイルに記載する。
+- 個別案件の背景、顧客情報、担当者、期限、機密情報は記載しない。
+- 一時的な判断や作業メモは記載しない。
