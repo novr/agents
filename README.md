@@ -1,10 +1,12 @@
 # agents
 
-自作の Agent Skills と slash commands。正本は [`skills/`](skills/) と [`commands/`](commands/)。
+自作の Agent Skills・slash commands・Cursor project rules。正本は [`skills/`](skills/)、[`commands/`](commands/)、[`.cursor/rules/`](.cursor/rules/)。
 
 ```bash
 ./sync.sh
 ```
+
+`sync.sh` は skills / commands のみ。`.cursor/rules/` は Cursor がワークスペースから読む。
 
 ## License
 
@@ -16,4 +18,4 @@
 - `pr-review-memory`: [Exocortex](https://github.com/fuwasegu/exocortex) MCP（任意）
 - `slot-worktree`: Python 3
 
-各 skill / command の手順・オプションはそれぞれのファイルを見る。
+各 skill / command / rule の手順・オプションはそれぞれのファイルを見る。
